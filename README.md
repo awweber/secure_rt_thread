@@ -6,7 +6,21 @@ Dieses Projekt demonstriert die Implementierung von Sicherheitsaspekten in Echtz
 
 **Autor:** Alexander Weber  
 **Datum:** Juli 2025  
-**Teilprüfung:** 6 - Einführung in die Sicherheitsaspekte von Echtzeit-Embedded-Linux-Systemen
+**Teilprüfung:** 55 - Einführung in die Sicherheitsaspekte von Echtzeit-Embedded-Linux-Systemen
+
+## 🔄 **Projekt-Varianten**
+
+Dieses Projekt bietet **zwei verschiedene Implementierungen** der Netzwerksicherheit:
+
+### **1. Interface-basierte Lösung** (`secure_rt_thread.c`)
+- Überprüft lokale Netzwerk-Interfaces auf autorisierte IP-Adressen
+- Standalone-Anwendung mit lokaler Authentifizierung
+
+### **2. Client-Server-basierte Lösung** (`secure_rt_server.c` + `test_client.c`) ⭐
+- **TCP-Server** der eingehende Verbindungen von autorisierten IP-Adressen akzeptiert
+- **Remote-Authentifizierung** über Netzwerk
+- **Verteilte RT-Thread-Ausführung** für verschiedene Clients
+- **Bessere Interpretation** der Aufgabenstellung: "nur Verbindungen von bestimmten IP-Adressen akzeptieren"
 
 ---
 
@@ -135,13 +149,67 @@ sudo ./secure_rt_thread
 
 ---
 
+## **Client-Server-Verwendung** ⭐
+
+### **Server starten**
+```bash
+# Terminal 1: Server starten
+make server
+# oder direkt:
+./secure_rt_server
+
+=== SECURE REALTIME SERVER ===
+Port: 8080
+Autorisierte Client-IPs: 127.0.0.1, 192.168.1.100
+Für STRG+C zum Beenden
+
+Server lauscht auf Port 8080...
+```
+
+### **Client verbinden**
+```bash
+# Terminal 2: Client starten
+make client
+# oder direkt:
+./test_client
+
+=== SECURE RT CLIENT ===
+Verbinde zu Server: 127.0.0.1:8080
+✓ Verbindung zum Server hergestellt
+=== REMOTE AUTHENTICATION ===
+Username: admin
+✓ Authentication successful! RT access granted.
+
+=== ECHTZEIT-DATEN EMPFANGEN ===
+=== REALTIME THREAD STARTED ===
+Priority: 50, Cycles: 10
+[Cycle 01] RT-Task executed at 1721234567.123 for 127.0.0.1
+[Cycle 02] RT-Task executed at 1721234568.124 for 127.0.0.1
+...
+```
+
+### **Sicherheitsfeatures in Aktion**
+```bash
+# Nicht autorisierte IP (wird abgelehnt)
+./test_client 192.168.1.200
+✗ IP address not authorized. Connection refused.
+
+# Falsche Authentifizierung
+Username: user
+✗ Authentication failed! Access denied.
+```
+
+---
+
 ## Code-Architektur
 
 ### **Datei-Struktur**
 ```
 secure_rt_thread/
-├── secure_rt_thread.c    # Hauptprogramm
-├── Makefile             # Build-System
+├── secure_rt_thread.c    # Hauptprogramm (Interface-basiert)
+├── secure_rt_server.c    # TCP-Server (Client-Server-basiert) ⭐
+├── test_client.c         # Test-Client für Server
+├── Makefile             # Build-System (alle Varianten)
 ├── README.md            # Diese Dokumentation
 └── aufgabe.md          # Aufgabenstellung
 ```
