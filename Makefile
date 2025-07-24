@@ -1,11 +1,15 @@
 # Makefile for secure_rt_thread.c
-
+# Define the compiler
 CC = gcc
+# Define compiler flags
 CFLAGS = -Wall -O2
-LDFLAGS = -lpthread -lrt
+# Define linker flags
+LDFLAGS = -lpthread -lrt # Link with pthread and rt libraries
+# Define targets
 TARGET = secure_rt_thread
 SERVER_TARGET = secure_rt_server
 CLIENT_TARGET = test_client
+# Define source files
 SRC = secure_rt_thread.c
 SERVER_SRC = secure_rt_server.c
 CLIENT_SRC = test_client.c

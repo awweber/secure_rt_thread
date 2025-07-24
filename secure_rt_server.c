@@ -51,6 +51,12 @@ int server_socket = -1;
 // ========================================
 // CLIENT-DATENSTRUKTUR
 // ========================================
+// Enthält Informationen über verbundene Clients
+// Wird in Threads verwendet, um Client-spezifische Operationen durchzuführen
+// Diese Struktur ermöglicht es, mehrere Clients gleichzeitig zu bedienen
+// und deren Verbindungen zu verwalten
+// Enthält Socket, Adresse, IP und Authentifizierungsstatus
+// Wird in handle_client() verwendet, um Threads für jeden Client zu starten
 typedef struct {
     int client_socket;
     struct sockaddr_in client_addr;
@@ -62,6 +68,8 @@ typedef struct {
 // ========================================
 // SIGNAL-HANDLER FÜR SAUBERES SHUTDOWN
 // ========================================
+// Beendet den Server bei SIGINT oder SIGTERM
+// Wird aufgerufen, wenn der Server mit STRG+C oder kill beendet wird
 void signal_handler(int sig) {
     printf("\n=== SERVER SHUTDOWN ===\n");
     printf("Signal %d empfangen, beende Server...\n", sig);
@@ -75,6 +83,7 @@ void signal_handler(int sig) {
 // ========================================
 // IP-ADRESS-AUTORISIERUNG
 // ========================================
+// Überprüft ob die Client-IP autorisiert ist
 int check_client_ip_authorization(const char* client_ip) {
     printf("Überprüfe Client-IP: %s\n", client_ip);
     
@@ -95,6 +104,11 @@ int check_client_ip_authorization(const char* client_ip) {
 // ========================================
 // CLIENT-AUTHENTIFIZIERUNG ÜBER NETZWERK
 // ========================================
+// Authentifiziert den Client über Netzwerkkommunikation
+// Erwartet Benutzernamen und prüft ob er autorisiert ist
+// Wird in handle_client() verwendet, um sicherzustellen, dass nur autorisierte Clients Echtzeit-Threads starten können
+// Sendet Authentifizierungsaufforderung und empfängt Benutzernamen
+// Vergleicht den Benutzernamen mit dem autorisierten Benutzernamen
 int authenticate_network_client(int client_socket) {
     char buffer[BUFFER_SIZE];
     char username[MAX_USERNAME_LENGTH];
@@ -145,6 +159,10 @@ int authenticate_network_client(int client_socket) {
 // ========================================
 // ECHTZEIT-TASK FÜR CLIENT
 // ========================================
+// Führt die Echtzeit-Operationen für einen verbundenen Client aus
+// Wird in einem separaten Thread für jeden Client gestartet
+// Simuliert eine Echtzeit-Task, die periodisch ausgeführt wird
+// Nutzt clock_nanosleep() für präzise Zeitsteuerung
 void* client_realtime_task(void* arg) {
     client_info_t* client = (client_info_t*)arg;
     struct timespec next_period, current_time;
@@ -166,6 +184,7 @@ void* client_realtime_task(void* arg) {
     send(client->client_socket, message, strlen(message), 0);
     
     // Echtzeit-Hauptschleife
+    // Führt MAX_CYCLES Zyklen aus, jeder genau TASK_PERIOD_SEC Sekunden nach dem vorherigen
     while (cycle_count < MAX_CYCLES && server_running) {
         // Nächste Periode berechnen
         next_period.tv_sec += TASK_PERIOD_SEC;
@@ -216,6 +235,8 @@ void* client_realtime_task(void* arg) {
 // ========================================
 // CLIENT-HANDLER-THREAD
 // ========================================
+// Hinweis: Der Pointer 'client' MUSS mit malloc() alloziert werden!
+// Niemals einen stack-allozierten oder wiederverwendeten Pointer übergeben!
 void* handle_client(void* arg) {
     client_info_t* client = (client_info_t*)arg;
     pthread_t rt_thread;
@@ -330,16 +351,17 @@ int main() {
     
     // 2. Server-Adresse konfigurieren
     memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;  // Alle Interfaces
-    server_addr.sin_port = htons(SERVER_PORT);
+    server_addr.sin_family = AF_INET; // IPv4   
+    server_addr.sin_addr.s_addr = INADDR_ANY;  // Alle verfügbaren Interfaces
+    server_addr.sin_port = htons(SERVER_PORT); // Port in Netzwerk-Byte-Reihenfolge
     
-    // 3. Socket binden
+    // 3. Socket an Port binden
     if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         perror("bind");
         close(server_socket);
         return EXIT_FAILURE;
     }
+    printf("Server gebunden an Port %d\n", SERVER_PORT);
     
     // 4. Auf Verbindungen lauschen
     if (listen(server_socket, MAX_CLIENTS) < 0) {
@@ -347,13 +369,17 @@ int main() {
         close(server_socket);
         return EXIT_FAILURE;
     }
-    
+
     printf("Server lauscht auf Port %d...\n", SERVER_PORT);
     
+    
     // 5. Client-Verbindungen akzeptieren
+    // Hauptschleife: Akzeptiert Verbindungen solange der Server läuft (server_running == 1)
+    printf("Warte auf Client-Verbindungen...\n");
     while (server_running) {
         client_addr_len = sizeof(client_addr);
         client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_addr_len);
+        
         
         if (client_socket < 0) {
             if (server_running) {  // Nur Fehler ausgeben wenn Server noch läuft
@@ -391,8 +417,8 @@ int main() {
     
     // Cleanup
     close(server_socket);
-    munlockall();
-    printf("Server beendet\n");
+    munlockall(); // Speicher-Locking aufheben
+    printf("Server beendet, alle Ressourcen freigegeben\n");
     
     return EXIT_SUCCESS;
 }

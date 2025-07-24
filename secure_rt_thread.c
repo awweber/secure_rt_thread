@@ -201,7 +201,7 @@ int main() {
     printf("PREEMPT-RT Kernel empfohlen für beste Performance\n\n");
     
     // ========================================
-    // SCHRITT 0: BENUTZERAUTHENTIFIZIERUNG
+    // BENUTZERAUTHENTIFIZIERUNG
     // ========================================
     // Sicherheitscheck: Nur autorisierte Benutzer dürfen RT-Threads starten
     // In produktiven Systemen kritisch für Systemsicherheit und -stabilität
@@ -213,7 +213,7 @@ int main() {
     }
     
     // ========================================
-    // SCHRITT 0.5: NETZWERKSICHERHEITSÜBERPRÜFUNG
+    // NETZWERKSICHERHEITSÜBERPRÜFUNG
     // ========================================
     // Überprüfe ob System über autorisierte Netzwerk-Interfaces verfügt
     // Wichtig für networked embedded systems und remote RT-Operationen

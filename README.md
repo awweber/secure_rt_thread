@@ -6,7 +6,7 @@ Dieses Projekt demonstriert die Implementierung von Sicherheitsaspekten in Echtz
 
 **Autor:** Alexander Weber  
 **Datum:** Juli 2025  
-**Teilprüfung:** 55 - Einführung in die Sicherheitsaspekte von Echtzeit-Embedded-Linux-Systemen
+**Teilprüfung 6:** Einführung in die Sicherheitsaspekte von Echtzeit-Embedded-Linux-Systemen
 
 ## 🔄 **Projekt-Varianten**
 
