@@ -2,6 +2,8 @@ Für die detaillierte Beschreibung der Verwendung:
 bash: 
     'make help'
 
+Gegebenfalls ist eine Anpassung des Ports (aktuell SERVER_PORT 8080) notwendig
+
 Autorisierter Benutzername = 'admin' 
 Autorisierte IP-Adresse (localhost) = "127.0.0.1"  
 Alternative autorisierte IP = "192.168.178.49" (Raspberry Pi 5 wlan0)
